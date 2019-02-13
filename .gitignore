@@ -1,0 +1,10 @@
+*~
+*.pyc
+*.orig
+._*
+.DS_*
+*.dat
+*.mo
+.ipynb_checkpoints/
+*.ipynb
+.idea/
