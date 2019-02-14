@@ -12,16 +12,12 @@
 
     <!-- Bootstrap core CSS -->
     <link href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="{% static 'bootstrap/form-validation.css' %}" rel="stylesheet">
-
     <link href="{% static 'css/main.css' %}" rel="stylesheet">
   </head>
 
   <body class="bg-light">
 
-    <div class="container">
+    <div class="container" id="vending_machine">
       <div class="py-5 text-center">
         <h2>Vending machine</h2>
       </div>
@@ -99,11 +95,30 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script>window.jQuery || document.write('<script src="{% static 'bootstrap/assets/js/vendor/jquery-slim.min.js' %}"><\/script>')</script>
-    <script src="{% static 'bootstrap/assets/js/vendor/popper.min.js"></script>
-    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="{% static 'bootstrap/assets/js/vendor/holder.min.js"></script>
+    <script src="{% static 'bootstrap/assets/js/vendor/popper.min.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bootstrap/assets/js/vendor/holder.min.js' %}"></script>
+    <script src="{% static 'js/vue.min.js' %}"></script>
+    <script src="https://unpkg.com/vue-resource@1.5.1/dist/vue-resource.min.js"></script>
     <script>
+      Vue.mixin({ delimiters: ['[[',']]'] });
+      var v = new Vue({
+          el: '#vending_machine',
+          data: {
 
+          },
+          methods:{
+            testSend(){
+              this.$http.get('/').then(response => {
+
+                // get body data
+                console.log(response.body);
+              }, response => {
+                // error callback
+              });
+            }
+          }
+      });
     </script>
   </body>
 </html>
