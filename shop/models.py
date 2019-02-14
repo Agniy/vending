@@ -1,5 +1,8 @@
 from django.db import models
+from django.db.models import Sum
 from vending.default_manager import DefaultManager
+
+
 
 class Coin(models.Model):
     title = models.CharField('Валюта', max_length=255)
@@ -11,11 +14,24 @@ class Coin(models.Model):
         verbose_name = "монеты"
         verbose_name_plural = "монеты"
 
+class AbstractCashManager(DefaultManager):
+    def get_all_dict(self):
+        return dict(((c.id,{
+            "id":c.id,
+            "value":c.coin.value,
+            "count":c.cnt
+        }) for c in self.select_related('coin').all().order_by('coin__value')))
+
+    def get_summ(self):
+        summ = 0
+        for cash in self.select_related('coin').filter(cnt__gt=0):
+            summ += cash.cnt * cash.coin.value
+        return summ
+
 class AbstractCash(models.Model):
     coin = models.ForeignKey(Coin,verbose_name="Монета",on_delete=models.CASCADE)
-    count = models.PositiveIntegerField('Количество',default=0)
-    objects = DefaultManager()
-
+    cnt = models.PositiveIntegerField('Количество',default=0)
+    objects = AbstractCashManager()
     class Meta:
         verbose_name ="деньга"
         verbose_name_plural = "деньги"
@@ -38,7 +54,7 @@ class UserVMCash(AbstractCash):
 
 class Product(models.Model):
     title = models.CharField('Название', max_length=255)
-    count = models.PositiveIntegerField('Остаток',default=0)
+    cnt = models.PositiveIntegerField('Остаток',default=0)
     price = models.PositiveIntegerField('Сумма',default=0)
     sort = models.PositiveSmallIntegerField('Количество',default=0)
     objects = DefaultManager()

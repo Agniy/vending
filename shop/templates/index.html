@@ -25,45 +25,43 @@
         <div class="col-md-4 order-md-3 mb-4">
           <h4 class="d-flex justify-content-between align-items-center mb-3">
             <span class="text-muted">Товары</span>
-            <span class="badge badge-secondary badge-pill">3</span>
+            <span class="badge badge-secondary badge-pill">[[products.length]]</span>
           </h4>
           <ul class="list-group mb-3">
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
+            <li 
+              class="list-group-item d-flex justify-content-between lh-condensed"
+              v-for="(product,pid) in products">
               <div>
-                <h6 class="my-0">Product name</h6>
-                <button type="button" class="btn btn-primary">Купить</button>
+                <h6 class="my-0">[[ product.title ]] ([[ product.count ]] шт.)</h6>
+                <button 
+                  type="button" 
+                  class="btn btn-primary">Купить</button>
               </div>
-              <span class="text-muted">12</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
-              <div>
-                <h6 class="my-0">Second product</h6>
-                <button type="button" class="btn btn-primary">Купить</button>
-              </div>
-              <span class="text-muted">8</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
-              <div>
-                <h6 class="my-0">Third item</h6>
-                <button type="button" class="btn btn-primary">Купить</button>
-              </div>
-              <span class="text-muted">5</span>
+              <span class="text-muted">[[ product.price ]] р.</span>
             </li>
           </ul>
         </div>
         <div class="col-md-4 order-md-1">
           <h4 class="mb-3">Ваши монеты</h4>
           <div>
-            <div class="numberCircle">30</div>
-            <div class="numberCircle">1</div>
-            <div class="numberCircle">2</div>
+            <div v-for="(cash,cid) in userCash">
+              <div 
+                class="numberCircle" 
+                @click="putCoin(cash.id)">
+                  [[cash.value]]
+              </div>
+              <div class="cointCount"> - [[cash.count]] шт.</div>
+            </div>
           </div>
         </div>
         <div class="col-md-4 order-md-2">
           <h4 class="mb-3">Монеты автомата</h4>
-            <div class="numberCircle">30</div>
-            <div class="numberCircle">1</div>
-            <div class="numberCircle">2</div>
+            <div>
+            <div v-for="(cash,cid) in machineCash">
+              <div class="numberCircle">[[cash.value]]</div>
+              <div class="cointCount"> - [[cash.count]] шт.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -72,14 +70,14 @@
           <form>
             <div class="form-group">
               <label>Информация:</label>
-              <span>...</span>
+              <strong>[[ message ]]</strong>
             </div>
             <div class="form-group">
               <label for="userCashInMachine">Внесенная сумма:</label>
-              <input id="userCashInMachine" class="form-control" type="text" placeholder="0" readonly>
+              <input id="userCashInMachine" class="form-control" type="text" :placeholder="cashSumm + ' р.'" readonly>
             </div>
             <div class="form-group">
-              <button type="button" class="btn btn-primary btn-lg">Получить сдачу</button>
+              <button type="button" class="btn btn-primary btn-lg" @click="returnCoin">Получить сдачу</button>
             </div>
           </form>
         </div>
@@ -105,16 +103,52 @@
       var v = new Vue({
           el: '#vending_machine',
           data: {
+            csrf_token:"{{ csrf_token }}",
 
+            products:JSON.parse('{{ json_products|safe }}'),
+            userCash:JSON.parse('{{ json_user_cash|safe }}'),
+            machineCash:JSON.parse('{{ json_machine_cash|safe }}'),
+            cashSumm:{{ user_vm_summ }},
+            message:"..."
           },
           methods:{
-            testSend(){
-              this.$http.get('/').then(response => {
+            putCoin(cash_id){
+              var self = this;
+              const formData = {
+                "cash_id":cash_id,
+                "csrfmiddlewaretoken":this.csrf_token,
+                "action":"put_coin"
+              };
 
-                // get body data
-                console.log(response.body);
+              this.$http.post("/", formData, {emulateJSON: true})
+              .then(response => {
+                const data = response.body;
+                if(data.success){
+                  self.userCash[cash_id].count = data.user_vm_count;
+                  self.cashSumm = data.user_vm_summ;
+                }
               }, response => {
-                // error callback
+                console.error(response.body);
+              });
+            },
+            returnCoin(){
+              var self = this;
+              const formData = {
+                "csrfmiddlewaretoken":this.csrf_token,
+                "action":"return_coin"
+              };
+
+              this.$http.post("/", formData, {emulateJSON: true})
+              .then(response => {
+                const data = response.body;
+                if(data.success){
+                  self.userCash = data.user_cash;
+                  self.machineCash = data.vm_cash;
+                  self.cashSumm = data.user_vm_summ;
+                  self.message = data.return_coins_str;
+                }
+              }, response => {
+                console.error(response.body);
               });
             }
           }
