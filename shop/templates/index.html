@@ -35,7 +35,8 @@
                 <h6 class="my-0">[[ product.title ]] ([[ product.count ]] шт.)</h6>
                 <button 
                   type="button" 
-                  class="btn btn-primary">Купить</button>
+                  class="btn btn-primary"
+                  @click="buy_product(pid)">Купить</button>
               </div>
               <span class="text-muted">[[ product.price ]] р.</span>
             </li>
@@ -145,7 +146,26 @@
                   self.userCash = data.user_cash;
                   self.machineCash = data.vm_cash;
                   self.cashSumm = data.user_vm_summ;
-                  self.message = data.return_coins_str;
+                  self.message = data.message;
+                }
+              }, response => {
+                console.error(response.body);
+              });
+            },
+            buy_product(id){
+              var self = this;
+              const formData = {
+                "product_id":id,
+                "csrfmiddlewaretoken":this.csrf_token,
+                "action":"buy_product"
+              };
+
+              this.$http.post("/", formData, {emulateJSON: true})
+              .then(response => {
+                const data = response.body;
+                if(data.success){
+                  console.log(data);
+                  self.message = data.message;
                 }
               }, response => {
                 console.error(response.body);

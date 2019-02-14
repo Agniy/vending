@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Sum
+from django.db import transaction
 from vending.default_manager import DefaultManager
 
 
@@ -42,12 +42,60 @@ class UserCash(AbstractCash):
         verbose_name ="деньги покупателя"
         verbose_name_plural = "деньги покупателя"
 
+
+class VMCashManager(AbstractCashManager):
+    def return_coins(self,return_summ):
+        return_coins_str = ""
+
+        # get coins with its count, in vending machine bank
+        vm_cash_count = dict(((vmc.coin.value, vmc) for vmc in self.select_related('coin').filter(cnt__gt=0)))
+        sorted_vmc_keys = sorted(vm_cash_count.keys(), reverse=True)
+
+        for coin_value in sorted_vmc_keys:
+            count_coins_to_back = 0
+            count_coins_in_vm = vm_cash_count[coin_value].cnt
+
+            remainder = int(return_summ / coin_value)
+            if remainder:
+                if remainder <= count_coins_in_vm:
+                    count_coints_to_back = remainder
+                else:
+                    count_coints_to_back = remainder - count_coins_in_vm
+                return_summ -= count_coints_to_back * coin_value
+
+                with transaction.atomic():
+                    coin = vm_cash_count[coin_value].coin
+                    u_cash = UserCash.objects.get_or_none(coin=coin)
+                    if u_cash:
+                        u_cash.cnt += count_coints_to_back
+                        vm_cash_count[coin_value].cnt -= count_coints_to_back
+                        u_cash.save()
+                        vm_cash_count[coin_value].save()
+
+                        return_coins_str += str(coin_value) + ": " + str(count_coints_to_back) + "шт; "
+            # ----------------------------------------------------------
+
+        return return_coins_str,return_summ
+
 class VMCash(AbstractCash):
+    objects = VMCashManager()
     class Meta:
         verbose_name ="деньги машины"
         verbose_name_plural = "деньги машины"
 
+class UserVMCashManager(AbstractCashManager):
+    def move_all_to_vending(self):
+        for uvm_cash in self.filter(cnt__gt=0):
+            vm_cash = VMCash.objects.get_or_none(coin_id=uvm_cash.coin_id)
+            if vm_cash:
+                with transaction.atomic():
+                    vm_cash.cnt += uvm_cash.cnt
+                    uvm_cash.cnt = 0
+                    vm_cash.save()
+                    uvm_cash.save()
+
 class UserVMCash(AbstractCash):
+    objects = UserVMCashManager()
     class Meta:
         verbose_name ="активные деньги"
         verbose_name_plural = "активные деньги"

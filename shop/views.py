@@ -29,7 +29,8 @@ class IndexView(TemplateView):
     def post(self, request, **kwargs):
         result = {
             "success":True,
-            "error":{}
+            "error":{},
+            "message":"..."
         }
 
         post_data = request.POST
@@ -59,57 +60,41 @@ class IndexView(TemplateView):
 
             # move all coins from UserVMCash to VMCash
             # ----------------------------------------------------------
-            for uvm_cash in UserVMCash.objects.filter(cnt__gt=0):
-                vm_cash = VMCash.objects.get_or_none(coin_id=uvm_cash.coin_id)
-                if vm_cash:
-                    with transaction.atomic():
-                        vm_cash.cnt += uvm_cash.cnt
-                        uvm_cash.cnt = 0
-                        vm_cash.save()
-                        uvm_cash.save()
+            UserVMCash.objects.move_all_to_vending()
             # ----------------------------------------------------------
 
-            # try to give coins to user UserCash from VMCash by larger coins
+            # try to give coins to user from VMCash to UserCash by larger coins
             # ----------------------------------------------------------
-            return_coins_str = ""
-            # get coins with its count, in vending machine bank
-            vm_cash_count = dict(((vmc.coin.value, vmc) for vmc in VMCash.objects.select_related('coin').filter(cnt__gt=0)))
-            sorted_vmc_keys = sorted(vm_cash_count.keys(),reverse=True)
-
-            for coin_value in sorted_vmc_keys:
-                count_coins_to_back = 0
-                count_coins_in_vm = vm_cash_count[coin_value].cnt
-
-                remainder = int(user_vm_summ/coin_value)
-                if remainder:
-                    if remainder <= count_coins_in_vm:
-                        count_coints_to_back = remainder
-                    else:
-                        count_coints_to_back = remainder - count_coins_in_vm
-                    user_vm_summ -= count_coints_to_back * coin_value
-
-                    with transaction.atomic():
-                        coin = vm_cash_count[coin_value].coin
-                        u_cash = UserCash.objects.get_or_none(coin=coin)
-                        if u_cash:
-                            u_cash.cnt += count_coints_to_back
-                            vm_cash_count[coin_value].cnt -= count_coints_to_back
-                            u_cash.save()
-                            vm_cash_count[coin_value].save()
-
-                            return_coins_str += str(coin_value) + ":" + str(count_coints_to_back) + "шт; "
-                # ----------------------------------------------------------
-
-
+            return_coins_str,user_vm_summ = VMCash.objects.return_coins(user_vm_summ)
 
             result["user_cash"] = UserCash.objects.get_all_dict()
             result["vm_cash"] = VMCash.objects.get_all_dict()
             result["user_vm_summ"] = user_vm_summ
-            result["return_coins_str"] = "Автомат вернул - " + return_coins_str if return_coins_str else "Автомат ничего не вернул"
+            result["message"] = "Vending вернул - " + return_coins_str if return_coins_str else "Vending ничего не вернул"
             # ----------------------------------------------------------
 
         elif action == "buy_product":
-            pass
+            # get user cash summ in vending machine
+            user_vm_summ = UserVMCash.objects.get_summ()
+            product_id = post_data.get("product_id","")
+            if product_id:
+                product = Product.objects.get_or_none(pk=int(product_id))
+                if product and product.cnt and user_vm_summ >= product.price:
+                    UserVMCash.objects.move_all_to_vending()
+
+                    need_to_return = user_vm_summ - product.price
+                    return_coins_str,user_vm_summ = VMCash.objects.return_coins(need_to_return)
+
+                    result["message"] = "Вы купили - " + product.title + " "
+                    if return_coins_str:
+                        result["message"] += return_coins_str
+                elif not product or product.cnt == 0:
+                    result["message"] = product.title + " - осутствует"
+                else:
+                    result["message"] = "Недостаточно средств, внесите еще: " + str(product.price - user_vm_summ) + " р."
+
+                result["user_cash"] = UserCash.objects.get_all_dict()
+                result["vm_cash"] = VMCash.objects.get_all_dict()
 
         return JsonResponse(result)
 
