@@ -15,13 +15,14 @@
 
     <!-- Custom styles for this template -->
     <link href="{% static 'bootstrap/form-validation.css' %}" rel="stylesheet">
+
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
   </head>
 
   <body class="bg-light">
 
     <div class="container">
       <div class="py-5 text-center">
-        <img class="d-block mx-auto mb-4" src="https://getbootstrap.com/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
         <h2>Vending machine</h2>
       </div>
       <div class="row">
@@ -56,11 +57,35 @@
         </div>
         <div class="col-md-4 order-md-1">
           <h4 class="mb-3">Ваши монеты</h4>
-
+          <div>
+            <div class="numberCircle">30</div>
+            <div class="numberCircle">1</div>
+            <div class="numberCircle">2</div>
+          </div>
         </div>
         <div class="col-md-4 order-md-2">
           <h4 class="mb-3">Монеты автомата</h4>
+            <div class="numberCircle">30</div>
+            <div class="numberCircle">1</div>
+            <div class="numberCircle">2</div>
+        </div>
+      </div>
 
+      <div class="row">
+        <div class="col-md-6">
+          <form>
+            <div class="form-group">
+              <label>Информация:</label>
+              <span>...</span>
+            </div>
+            <div class="form-group">
+              <label for="userCashInMachine">Внесенная сумма:</label>
+              <input id="userCashInMachine" class="form-control" type="text" placeholder="0" readonly>
+            </div>
+            <div class="form-group">
+              <button type="button" class="btn btn-primary btn-lg">Получить сдачу</button>
+            </div>
+          </form>
         </div>
       </div>
 
