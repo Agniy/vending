@@ -67,7 +67,7 @@
       </div>
 
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
           <form>
             <div class="form-group">
               <label>Информация:</label>
@@ -75,7 +75,7 @@
             </div>
             <div class="form-group">
               <label for="userCashInMachine">Внесенная сумма:</label>
-              <input id="userCashInMachine" class="form-control" type="text" :placeholder="cashSumm + ' р.'" readonly>
+              <input style="width:100px;" id="userCashInMachine" class="form-control" type="text" :placeholder="cashSumm + ' р.'" readonly>
             </div>
             <div class="form-group">
               <button type="button" class="btn btn-primary btn-lg" @click="returnCoin">Получить сдачу</button>
@@ -168,7 +168,7 @@
                   self.userCash = data.user_cash;
                   self.machineCash = data.vm_cash;
                   self.cashSumm = data.user_vm_summ;
-
+                  self.products = data.products;
                 }
               }, response => {
                 console.error(response.body);

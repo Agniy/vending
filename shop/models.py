@@ -72,7 +72,7 @@ class VMCashManager(AbstractCashManager):
                         u_cash.save()
                         vm_cash_count[coin_value].save()
 
-                        return_coins_str += str(coin_value) + ": " + str(count_coints_to_back) + "шт; "
+                        return_coins_str += str(coin_value) + "р. : " + str(count_coints_to_back) + "шт; "
             # ----------------------------------------------------------
 
         return return_coins_str,return_summ
@@ -100,12 +100,21 @@ class UserVMCash(AbstractCash):
         verbose_name ="активные деньги"
         verbose_name_plural = "активные деньги"
 
+class ProductManager(DefaultManager):
+    def get_all_dict(self):
+        return dict(((p.id,{
+            "id":p.id,
+            "title":p.title,
+            "price":p.price,
+            "count":p.cnt
+        }) for p in self.all().order_by('sort')))
+
 class Product(models.Model):
     title = models.CharField('Название', max_length=255)
     cnt = models.PositiveIntegerField('Остаток',default=0)
     price = models.PositiveIntegerField('Сумма',default=0)
     sort = models.PositiveSmallIntegerField('Количество',default=0)
-    objects = DefaultManager()
+    objects = ProductManager()
 
     class Meta:
         verbose_name ="товар"

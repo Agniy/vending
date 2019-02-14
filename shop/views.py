@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from django.http import JsonResponse
 from django.db import transaction
 
-from shop.models import Product,UserCash,VMCash,UserVMCash
+from shop.models import Product,UserCash,VMCash,UserVMCash,Order
 
 class IndexView(TemplateView):
     template_name = "index.html"
@@ -12,13 +12,7 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
         
-        context['json_products'] = json.dumps(dict(((p.id,{
-            "id":p.id,
-            "title":p.title,
-            "price":p.price,
-            "count":p.cnt
-        }) for p in Product.objects.all().order_by('sort'))))
-
+        context['json_products'] = json.dumps(Product.objects.get_all_dict())
         context['json_user_cash'] = json.dumps(UserCash.objects.get_all_dict())
         context['json_machine_cash'] = json.dumps(VMCash.objects.get_all_dict())
 
@@ -83,12 +77,19 @@ class IndexView(TemplateView):
                     UserVMCash.objects.move_all_to_vending()
 
                     need_to_return = user_vm_summ - product.price
-                    return_coins_str,user_vm_summ = VMCash.objects.return_coins(need_to_return)
+                    return_coins_str = ""
+                    user_vm_summ = 0
+                    if need_to_return:
+                        return_coins_str,user_vm_summ = VMCash.objects.return_coins(need_to_return)
 
+                    #decrease count of products
                     product.cnt-=1
                     product.save()
 
-                    result["message"] = "Вы купили - " + product.title + ". "
+                    #create Order
+                    order = Order.objects.create(product=product,count=1,summ=product.price)
+
+                    result["message"] = "Заказ №"+ str(order.id) + ". Вы купили - " + product.title + ". "
                     if return_coins_str:
                         result["message"] += "Vending вернул - " + return_coins_str
                 elif not product or product.cnt == 0:
@@ -98,8 +99,8 @@ class IndexView(TemplateView):
 
             result["user_cash"] = UserCash.objects.get_all_dict()
             result["vm_cash"] = VMCash.objects.get_all_dict()
+            result["products"] = Product.objects.get_all_dict()
             result["user_vm_summ"] = user_vm_summ
-
 
         return JsonResponse(result)
 
