@@ -25,7 +25,8 @@ SECRET_KEY = '%-alwbi69fozj@lg@jj2&u3v4#%q^g%a4k)en68l=4z!8ptq(q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1","localhost"]
+CSRF_COOKIE_DOMAIN = '127.0.0.1'
 
 
 # Application definition

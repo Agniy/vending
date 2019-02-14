@@ -1,8 +1,11 @@
 from django.db import models
+from vending.default_manager import DefaultManager
 
 class Coin(models.Model):
-    img = models.ImageField(upload_to='coins', verbose_name='Изображение',max_length=255)
+    title = models.CharField('Валюта', max_length=255)
+    code = models.CharField('Код', max_length=255,db_index=True)
     value = models.PositiveSmallIntegerField('Номинал')
+    objects = DefaultManager()
 
     class Meta:
         verbose_name = "монеты"
@@ -10,7 +13,8 @@ class Coin(models.Model):
 
 class AbstractCash(models.Model):
     coin = models.ForeignKey(Coin,verbose_name="Монета",on_delete=models.CASCADE)
-    count = models.PositiveIntegerField('Количество')
+    count = models.PositiveIntegerField('Количество',default=0)
+    objects = DefaultManager()
 
     class Meta:
         verbose_name ="деньга"
@@ -34,8 +38,10 @@ class UserVMCash(AbstractCash):
 
 class Product(models.Model):
     title = models.CharField('Название', max_length=255)
-    price = models.PositiveIntegerField('Количество')
-    sort = models.PositiveSmallIntegerField('Номинал')
+    count = models.PositiveIntegerField('Остаток',default=0)
+    price = models.PositiveIntegerField('Сумма',default=0)
+    sort = models.PositiveSmallIntegerField('Количество',default=0)
+    objects = DefaultManager()
 
     class Meta:
         verbose_name ="товар"
@@ -46,6 +52,7 @@ class Order(models.Model):
     count = models.PositiveSmallIntegerField('Количество')
     summ = models.PositiveIntegerField('Сумма')
     cdate = models.DateTimeField('Создан', auto_now_add=True)
+    objects = DefaultManager()
 
     class Meta:
         verbose_name ="заказ"
