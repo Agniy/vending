@@ -27,6 +27,11 @@ class VMCash(AbstractCash):
         verbose_name ="деньги машины"
         verbose_name_plural = "деньги машины"
 
+class UserVMCash(AbstractCash):
+    class Meta:
+        verbose_name ="активные деньги"
+        verbose_name_plural = "активные деньги"
+
 class Product(models.Model):
     title = models.CharField('Название', max_length=255)
     price = models.PositiveIntegerField('Количество')
