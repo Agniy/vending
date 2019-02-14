@@ -85,16 +85,21 @@ class IndexView(TemplateView):
                     need_to_return = user_vm_summ - product.price
                     return_coins_str,user_vm_summ = VMCash.objects.return_coins(need_to_return)
 
-                    result["message"] = "Вы купили - " + product.title + " "
+                    product.cnt-=1
+                    product.save()
+
+                    result["message"] = "Вы купили - " + product.title + ". "
                     if return_coins_str:
-                        result["message"] += return_coins_str
+                        result["message"] += "Vending вернул - " + return_coins_str
                 elif not product or product.cnt == 0:
                     result["message"] = product.title + " - осутствует"
                 else:
                     result["message"] = "Недостаточно средств, внесите еще: " + str(product.price - user_vm_summ) + " р."
 
-                result["user_cash"] = UserCash.objects.get_all_dict()
-                result["vm_cash"] = VMCash.objects.get_all_dict()
+            result["user_cash"] = UserCash.objects.get_all_dict()
+            result["vm_cash"] = VMCash.objects.get_all_dict()
+            result["user_vm_summ"] = user_vm_summ
+
 
         return JsonResponse(result)
 

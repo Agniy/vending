@@ -164,8 +164,11 @@
               .then(response => {
                 const data = response.body;
                 if(data.success){
-                  console.log(data);
                   self.message = data.message;
+                  self.userCash = data.user_cash;
+                  self.machineCash = data.vm_cash;
+                  self.cashSumm = data.user_vm_summ;
+
                 }
               }, response => {
                 console.error(response.body);
