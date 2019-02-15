@@ -94,6 +94,30 @@ class UserVMCashManager(AbstractCashManager):
                     vm_cash.save()
                     uvm_cash.save()
 
+    def move_summ_to_vending(self,summ):
+        uvm_cash_count = dict(((uvm.coin.value, uvm) for uvm in self.select_related('coin').filter(cnt__gt=0)))
+        sorted_vmc_keys = sorted(uvm_cash_count.keys(), reverse=True)
+        for coin_value in sorted_vmc_keys:
+            remainder = int(summ / coin_value)
+            uvm_cash = uvm_cash_count[coin_value]
+            if summ != 0:
+
+                count_coins_to_vm = uvm_cash.cnt;
+                if remainder < uvm_cash.cnt:
+                    count_coins_to_vm = remainder
+
+                vm_cash = VMCash.objects.get_or_none(coin=uvm_cash.coin)
+                if vm_cash:
+                    with transaction.atomic():
+                        uvm_cash.cnt -= count_coins_to_vm
+                        vm_cash.cnt += count_coins_to_vm
+                        uvm_cash.save()
+                        vm_cash.save()
+
+                        summ -= coin_value * count_coins_to_vm
+
+
+
 class UserVMCash(AbstractCash):
     objects = UserVMCashManager()
     class Meta:

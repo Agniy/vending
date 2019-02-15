@@ -80,13 +80,12 @@ class IndexView(TemplateView):
             if product_id:
                 product = Product.objects.get_or_none(pk=int(product_id))
                 if product and product.cnt and user_vm_summ >= product.price:
-                    UserVMCash.objects.move_all_to_vending()
-
                     need_to_return = user_vm_summ - product.price
-                    return_coins_str = ""
-                    user_vm_summ = 0
-                    if need_to_return:
-                        return_coins_str,user_vm_summ = VMCash.objects.return_coins(need_to_return)
+                    user_vm_summ = need_to_return
+                    if not need_to_return:
+                        UserVMCash.objects.move_all_to_vending()
+                    else:
+                        UserVMCash.objects.move_summ_to_vending(product.price)
 
                     #decrease count of products
                     product.cnt-=1
@@ -96,8 +95,7 @@ class IndexView(TemplateView):
                     order = Order.objects.create(product=product,count=1,summ=product.price)
 
                     result["message"] = "Заказ №"+ str(order.id) + ". Вы купили - " + product.title + ". "
-                    if return_coins_str:
-                        result["message"] += "Vending вернул - " + return_coins_str
+
                 elif not product or product.cnt == 0:
                     result["message"] = product.title + " - осутствует"
                 else:
