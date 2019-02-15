@@ -82,10 +82,9 @@ class IndexView(TemplateView):
                 if product and product.cnt and user_vm_summ >= product.price:
                     need_to_return = user_vm_summ - product.price
                     user_vm_summ = need_to_return
-                    if not need_to_return:
-                        UserVMCash.objects.move_all_to_vending()
-                    else:
-                        UserVMCash.objects.move_summ_to_vending(product.price)
+                    UserVMCash.objects.move_all_to_vending()
+                    if need_to_return:
+                        VMCash.objects.return_coins(need_to_return,to_user=False)
 
                     #decrease count of products
                     product.cnt-=1
