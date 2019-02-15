@@ -26,6 +26,7 @@ SECRET_KEY = '%-alwbi69fozj@lg@jj2&u3v4#%q^g%a4k)en68l=4z!8ptq(q'
 DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1","localhost","83.220.168.74"]
+CSRF_COOKIE_DOMAIN = '83.220.168.74'
 
 # Application definition
 
