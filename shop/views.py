@@ -3,11 +3,17 @@ import json
 from django.views.generic import TemplateView
 from django.http import JsonResponse
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from shop.models import Product,UserCash,VMCash,UserVMCash,Order
 
 class IndexView(TemplateView):
     template_name = "index.html"
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(IndexView, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
